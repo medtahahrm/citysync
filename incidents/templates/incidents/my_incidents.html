@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Mes signalements | CitySync{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">
+                <i class="fas fa-list text-primary me-2"></i>
+                Mes signalements
+            </h2>
+            <p class="text-muted mb-0">
+                Historique des incidents que vous avez signalés
+            </p>
+        </div>
+
+        <a href="{% url 'incidents:report_incident' %}" class="btn btn-primary">
+            <i class="fas fa-flag me-1"></i>
+            Nouveau signalement
+        </a>
+    </div>
+
+    <!-- EMPTY STATE -->
+    {% if incidents|length == 0 %}
+        <div class="text-center p-5 bg-light rounded shadow-sm">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <h5 class="fw-semibold">Aucun signalement</h5>
+            <p class="text-muted">
+                Vous n’avez encore signalé aucun incident.
+            </p>
+            <a href="{% url 'incidents:report_incident' %}" class="btn btn-outline-primary">
+                <i class="fas fa-plus"></i> Créer mon premier signalement
+            </a>
+        </div>
+
+    {% else %}
+
+    <!-- INCIDENT LIST -->
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Titre</th>
+                        <th>Catégorie</th>
+                        <th>Statut</th>
+                        <th>Date</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for incident in incidents %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td class="fw-semibold">
+                                {{ incident.title }}
+                            </td>
+                            <td>
+                                {{ incident.category.name }}
+                            </td>
+                            <td>
+                                {% if incident.status == "new" %}
+                                    <span class="badge bg-danger">Nouveau</span>
+                                {% elif incident.status == "in_progress" %}
+                                    <span class="badge bg-warning text-dark">En cours</span>
+                                {% else %}
+                                    <span class="badge bg-success">Résolu</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ incident.created_at|date:"d/m/Y" }}
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'incidents:incident_detail' incident.id %}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}

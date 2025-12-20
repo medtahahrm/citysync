@@ -1,0 +1,71 @@
+<!-- Save as: static/img/citysync-logo.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="240" viewBox="0 0 980 240" role="img" aria-label="CitySync logo">
+  <defs>
+    <linearGradient id="gBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B63F6"></stop>
+      <stop offset="1" stop-color="#16C2FF"></stop>
+    </linearGradient>
+    <linearGradient id="gSwoosh" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#0B63F6"></stop>
+      <stop offset="0.6" stop-color="#14A7FF"></stop>
+      <stop offset="1" stop-color="#1FE3D2"></stop>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0B63F6" flood-opacity="0.18"></feDropShadow>
+    </filter>
+  </defs>
+
+  <!-- ICON GROUP -->
+  <g transform="translate(40,28)" filter="url(#softShadow)">
+    <!-- Swoosh rings -->
+    <path d="M165 160c-52 24-118 10-145-22 28 46 112 70 179 40 49-22 76-61 69-90-6 32-41 58-103 72z" fill="url(#gSwoosh)" opacity="0.95"></path>
+    <path d="M158 168c-44 18-102 6-127-18 25 39 98 58 154 34 41-18 64-49 58-72-5 25-34 44-85 56z" fill="white" opacity="0.85"></path>
+
+    <!-- City base -->
+    <g transform="translate(38,22)">
+      <!-- Left building -->
+      <path d="M20 140V60c0-8 6-14 14-14h26c8 0 14 6 14 14v80" fill="url(#gBlue)"></path>
+      <rect x="30" y="70" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="52" y="70" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="30" y="92" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="52" y="92" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="30" y="114" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="52" y="114" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+
+      <!-- Center tower -->
+      <path d="M86 140V34c0-9 7-16 16-16h22c9 0 16 7 16 16v106" fill="url(#gBlue)"></path>
+      <rect x="96" y="46" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="118" y="46" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="96" y="70" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="118" y="70" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="96" y="94" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="118" y="94" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+
+      <!-- Right building -->
+      <path d="M148 140V78c0-7 5-12 12-12h22c7 0 12 5 12 12v62" fill="url(#gBlue)"></path>
+      <rect x="156" y="88" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="176" y="88" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+      <rect x="156" y="110" width="10" height="10" rx="2" fill="#EAF4FF" opacity="0.95"></rect>
+
+      <!-- Ground -->
+      <rect x="10" y="140" width="206" height="16" rx="8" fill="#0B63F6" opacity="0.12"></rect>
+    </g>
+
+    <!-- Signal waves -->
+    <g transform="translate(150,28)" fill="none" stroke="#1FE3D2" stroke-width="7" stroke-linecap="round" opacity="0.95">
+      <path d="M0 24c14-14 34-14 48 0"></path>
+      <path d="M7 10c10-10 24-10 34 0" opacity="0.85"></path>
+    </g>
+  </g>
+
+  <!-- TEXT -->
+  <g transform="translate(340,140)">
+    <text x="0" y="0" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif" font-size="84" font-weight="800" letter-spacing="-1">
+      <tspan fill="#0B63F6">City</tspan>
+      <tspan fill="#1FE3D2">Sync</tspan>
+    </text>
+    <text x="2" y="46" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif" font-size="18" font-weight="600" fill="#4A5568" opacity="0.9">
+      Villes Résilientes &amp; Intelligentes
+    </text>
+  </g>
+</svg>

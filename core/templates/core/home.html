@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Accueil | CitySync{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<section class="hero-section mb-5">
+    <div class="card bg-primary text-white p-5 mb-4 shadow-sm rounded-4">
+        <h1 class="fw-bold display-6">
+            <i class="fas fa-city me-2"></i> Bienvenue sur CitySync
+        </h1>
+
+        <p class="hero-subtitle">
+            Connecter citoyens et institutions pour des villes
+            <strong>résilientes</strong> et <strong>intelligentes</strong>
+        </p>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'incidents:incident_list' %}" class="btn btn-light btn-lg mt-3">
+                <i class="fas fa-bullhorn me-2"></i>
+                Voir les signalements
+            </a>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-light btn-lg mt-3">
+                <i class="fas fa-arrow-right me-2"></i>
+                Commencer maintenant
+            </a>
+        {% endif %}
+    </div>
+</section>
+
+<!-- STATS -->
+<div class="container">
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card text-center p-4 shadow-sm stat-card">
+                <h2 class="fw-bold text-primary">{{ total_incidents }}</h2>
+                <p class="mb-0">Signalements</p>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card text-center p-4 shadow-sm stat-card">
+                <h2 class="fw-bold text-warning">{{ total_alerts }}</h2>
+                <p class="mb-0">Alertes actives</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mon Profil Citoyen - CitySync{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Profile Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" class="rounded-circle mb-3" width="150" height="150" style="object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+                            <i class="fas fa-user fa-4x"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <h4>{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-muted">Citoyen</p>
+                    
+                    {% if user.is_verified %}
+                        <span class="badge bg-success mb-3"><i class="fas fa-check-circle"></i> Compte vérifié</span>
+                    {% else %}
+                        <span class="badge bg-warning mb-3"><i class="fas fa-clock"></i> En attente de vérification</span>
+                    {% endif %}
+                    
+                    <div class="list-group list-group-flush mt-3">
+                        <div class="list-group-item">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            {{ user.email }}
+                        </div>
+                        {% if user.phone_number %}
+                        <div class="list-group-item">
+                            <i class="fas fa-phone text-primary me-2"></i>
+                            {{ user.phone_number }}
+                        </div>
+                        {% endif %}
+                        {% if user.city %}
+                        <div class="list-group-item">
+                            <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                            {{ user.city }}
+                        </div>
+                        {% endif %}
+                        <div class="list-group-item">
+                            <i class="fas fa-calendar-alt text-primary me-2"></i>
+                            Membre depuis {{ user.date_joined|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Mes statistiques</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Signalements totaux:</span>
+                        <strong>{{ total_reports }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Signalements résolus:</span>
+                        <strong class="text-success">{{ resolved_reports }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Taux de résolution:</span>
+                        <strong>
+                            {% if total_reports > 0 %}
+                                {{ resolved_reports|floatformat:0 }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <!-- Edit Profile Form -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user-edit"></i> Modifier mon profil</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_profile" value="1">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Prénom</label>
+                                {{ user_form.first_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nom</label>
+                                {{ user_form.last_name }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                {{ user_form.email }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Téléphone</label>
+                                {{ user_form.phone_number }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Ville</label>
+                                {{ user_form.city }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Photo de profil</label>
+                                {{ user_form.profile_picture }}
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <h6 class="mb-3"><i class="fas fa-id-card"></i> Informations citoyen</h6>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Numéro CNI</label>
+                                {{ profile_form.cni_number }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date de naissance</label>
+                                {{ profile_form.date_of_birth }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Profession</label>
+                                {{ profile_form.occupation }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Contact d'urgence</label>
+                                {{ profile_form.emergency_contact }}
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer les modifications
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Recent Incidents -->
+            {% if user_incidents %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Mes signalements récents</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Titre</th>
+                                    <th>Date</th>
+                                    <th>Statut</th>
+                                    <th>Urgence</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for incident in user_incidents %}
+                                <tr onclick="window.location='{% url 'incidents:incident_detail' incident.id %}'" style="cursor: pointer;">
+                                    <td>{{ incident.title|truncatechars:30 }}</td>
+                                    <td>{{ incident.created_at|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ incident.status }}">
+                                            {{ incident.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ incident.urgency }}">
+                                            {{ incident.get_urgency_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'incidents:my_incidents' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-list"></i> Voir tous mes signalements
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

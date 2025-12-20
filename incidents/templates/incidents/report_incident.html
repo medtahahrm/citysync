@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Signaler un incident | CitySync{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/* ---------- GLOBAL ---------- */
+.step-card {
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.06);
+    border: none;
+}
+.step-header {
+    font-weight: 700;
+    color: #0d6efd;
+    border-bottom: 2px solid #0d6efd;
+    padding-bottom: .5rem;
+    margin-bottom: 1.5rem;
+}
+.form-control, .form-select {
+    border-radius: 10px;
+}
+.form-control:focus {
+    box-shadow: 0 0 0 .15rem rgba(13,110,253,.15);
+}
+#map {
+    height: 380px;
+    border-radius: 14px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+.upload-box {
+    border: 2px dashed #d0d7e2;
+    padding: 25px;
+    border-radius: 14px;
+    text-align: center;
+    background: #f9fbff;
+}
+.upload-box:hover {
+    background: #eef4ff;
+}
+.submit-bar {
+    background: #fff;
+    border-top: 1px solid #e9ecef;
+    padding: 1.2rem;
+    position: sticky;
+    bottom: 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+
+    <!-- HEADER -->
+    <div class="text-center mb-5">
+        <h1 class="fw-bold">
+            <i class="fas fa-exclamation-circle text-danger"></i>
+            Signaler un incident
+        </h1>
+        <p class="text-muted">
+            Aidez votre ville en signalant un problème réel et localisé
+        </p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- STEP 1 -->
+        <div class="card step-card mb-4 p-4">
+            <div class="step-header">① Description</div>
+
+            <div class="mb-3">
+                <label class="form-label">Titre *</label>
+                <input type="text" name="title" class="form-control" required placeholder="Ex: Route inondée près du marché">
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Catégorie</label>
+                    <select name="category" class="form-select">
+                        <option value="">Choisir une catégorie</option>
+                        {% for c in categories %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-center">
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" name="is_anonymous">
+                        <label class="form-check-label">
+                            Signaler anonymement
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Description détaillée *</label>
+                <textarea name="description" rows="4" class="form-control" required></textarea>
+            </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="card step-card mb-4 p-4">
+            <div class="step-header">② Localisation</div>
+
+            <div class="alert alert-info">
+                <i class="fas fa-map-marker-alt"></i>
+                Votre position est détectée automatiquement. Cliquez sur la carte pour ajuster.
+            </div>
+
+            <div id="map" class="mb-3"></div>
+
+            <input type="hidden" id="latitude" name="latitude">
+            <input type="hidden" id="longitude" name="longitude">
+
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    <label class="form-label">Adresse *</label>
+                    <textarea id="address" name="address" class="form-control" rows="2" required></textarea>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Ville *</label>
+                    <input id="city" name="city" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Quartier</label>
+                <input name="neighborhood" class="form-control" placeholder="Ex: Maarif">
+            </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="card step-card mb-4 p-4">
+            <div class="step-header">③ Preuves (optionnel)</div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="upload-box">
+                        <i class="fas fa-camera fa-2x text-primary mb-2"></i>
+                        <input type="file" name="image" class="form-control mt-2" accept="image/*">
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="upload-box">
+                        <i class="fas fa-video fa-2x text-warning mb-2"></i>
+                        <input type="file" name="video" class="form-control mt-2" accept="video/*">
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="upload-box">
+                        <i class="fas fa-microphone fa-2x text-success mb-2"></i>
+                        <input type="file" name="audio_note" class="form-control mt-2" accept="audio/*">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUBMIT -->
+        <div class="submit-bar text-end">
+            <a href="/incidents/" class="btn btn-outline-secondary me-2">
+                Annuler
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-paper-plane"></i> Envoyer
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const latInput = document.getElementById("latitude");
+    const lngInput = document.getElementById("longitude");
+    const addrInput = document.getElementById("address");
+    const cityInput = document.getElementById("city");
+
+    const map = L.map("map").setView([31.7917, -7.0926], 6);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+    let marker;
+
+    function setMarker(lat, lng) {
+        if (!marker) {
+            marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+            marker.on("dragend", e => reverse(e.target.getLatLng()));
+        } else {
+            marker.setLatLng([lat, lng]);
+        }
+        map.setView([lat, lng], 16);
+        reverse({lat, lng});
+    }
+
+    function reverse(pos) {
+        latInput.value = pos.lat;
+        lngInput.value = pos.lng;
+
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}`)
+        .then(r => r.json())
+        .then(d => {
+            addrInput.value = d.display_name || "";
+            cityInput.value = d.address.city || d.address.town || d.address.village || "";
+        });
+    }
+
+    map.on("click", e => setMarker(e.latlng.lat, e.latlng.lng));
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            p => setMarker(p.coords.latitude, p.coords.longitude),
+            () => console.warn("Location denied")
+        );
+    }
+});
+</script>
+{% endblock %}

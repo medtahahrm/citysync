@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ incident.title }} - CitySync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        font-size: 0.9rem;
+        padding: 5px 10px;
+    }
+    .update-card {
+        border-left: 4px solid;
+        margin-bottom: 15px;
+    }
+    .update-reported { border-left-color: #6c757d; }
+    .update-verified { border-left-color: #0dcaf0; }
+    .update-in_progress { border-left-color: #ffc107; }
+    .update-resolved { border-left-color: #198754; }
+    .update-closed { border-left-color: #212529; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Incident Details -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">{{ incident.title }}</h4>
+                <div>
+                    <span class="badge bg-{{ incident.urgency }} status-badge">
+                        {{ incident.get_urgency_display }}
+                    </span>
+                    <span class="badge bg-secondary status-badge">
+                        {{ incident.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <!-- Incident Info -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>Catégorie:</strong> 
+                            {% if incident.category %}
+                                {{ incident.category.name }}
+                            {% else %}
+                                Non spécifié
+                            {% endif %}
+                        </p>
+                        <p><strong>Signalé par:</strong> 
+                            {% if incident.is_anonymous %}
+                                Citoyen anonyme
+                            {% else %}
+                                {{ incident.citizen.username }}
+                            {% endif %}
+                        </p>
+                        <p><strong>Date:</strong> {{ incident.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Localisation:</strong></p>
+                        <p class="mb-1">{{ incident.address }}</p>
+                        <p class="mb-1">{{ incident.neighborhood }}, {{ incident.city }}</p>
+                        {% if incident.latitude and incident.longitude %}
+                            <small class="text-muted">
+                                <i class="fas fa-map-marker-alt"></i> 
+                                {{ incident.latitude|floatformat:4 }}, {{ incident.longitude|floatformat:4 }}
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                <div class="mb-4">
+                    <h5>Description</h5>
+                    <p>{{ incident.description|linebreaks }}</p>
+                </div>
+                
+                <!-- Multimedia -->
+                {% if incident.image or incident.video %}
+                <div class="mb-4">
+                    <h5>Preuves multimédias</h5>
+                    <div class="row">
+                        {% if incident.image %}
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <img src="{{ incident.image.url }}" alt="Photo de l'incident" 
+                                         class="img-fluid rounded" style="max-height: 200px;">
+                                    <p class="mt-2 mb-0"><small>Photo</small></p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if incident.video %}
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-video fa-3x text-muted"></i>
+                                    <p class="mt-2 mb-0">
+                                        <a href="{{ incident.video.url }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-download"></i> Télécharger la vidéo
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- AI Analysis (if available) -->
+                {% if incident.ai_analysis %}
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-robot"></i> Analyse IA</h6>
+                    <p class="mb-1">
+                        <strong>Catégorie détectée:</strong> 
+                        {% if incident.ai_category %}
+                            {{ incident.ai_category.name }}
+                        {% else %}
+                            Non déterminée
+                        {% endif %}
+                    </p>
+                    <p class="mb-1"><strong>Confiance:</strong> {{ incident.ai_confidence|default:"N/A" }}</p>
+                    <p class="mb-0"><strong>Mots-clés:</strong> {{ incident.ai_keywords|default:"N/A" }}</p>
+                </div>
+                {% endif %}
+                
+                <!-- Actions -->
+                <div class="d-flex gap-2">
+                    {% if user == incident.citizen %}
+                        <button class="btn btn-outline-primary" disabled>
+                            <i class="fas fa-edit"></i> Votre signalement
+                        </button>
+                    {% endif %}
+                    
+                    {% if user.user_type == 'institution' %}
+                        <a href="{% url 'incidents:update_incident' incident.id %}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Mettre à jour
+                        </a>
+                        <a href="{% url 'incidents:add_response' incident.id %}" class="btn btn-success">
+                            <i class="fas fa-reply"></i> Répondre
+                        </a>
+                    {% endif %}
+                    
+                    <button class="btn btn-outline-secondary" onclick="window.history.back()">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Institution Response -->
+        {% if incident.official_response %}
+        <div class="card mb-4 border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-building"></i> Réponse officielle
+                    {% if incident.official_response.institution.institution_profile %}
+                        - {{ incident.official_response.institution.institution_profile.official_name }}
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Réponse:</strong></p>
+                <p>{{ incident.official_response.response_text|linebreaks }}</p>
+                
+                {% if incident.official_response.action_plan %}
+                <p><strong>Plan d'action:</strong></p>
+                <p>{{ incident.official_response.action_plan|linebreaks }}</p>
+                {% endif %}
+                
+                {% if incident.official_response.estimated_completion %}
+                <p><strong>Date estimée de résolution:</strong> 
+                    {{ incident.official_response.estimated_completion|date:"d/m/Y" }}
+                </p>
+                {% endif %}
+                
+                <small class="text-muted">
+                    Publié le {{ incident.official_response.created_at|date:"d/m/Y H:i" }}
+                </small>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Updates Timeline -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history"></i> Historique des mises à jour
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if updates %}
+                    {% for update in updates %}
+                        <div class="update-card update-{{ update.status }}">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    {{ update.get_status_display }}
+                                    <small class="text-muted float-end">
+                                        {{ update.created_at|timesince }}
+                                    </small>
+                                </h6>
+                                <p class="card-text mb-1">{{ update.comment }}</p>
+                                <small class="text-muted">
+                                    Par: 
+                                    {% if update.institution.institution_profile %}
+                                        {{ update.institution.institution_profile.official_name }}
+                                    {% else %}
+                                        {{ update.institution.username }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center text-muted">Aucune mise à jour pour le moment</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Statistiques</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-1">
+                    <i class="fas fa-eye text-primary"></i> 
+                    <strong>{{ incident.view_count }}</strong> vues
+                </p>
+                <p class="mb-1">
+                    <i class="fas fa-clock text-warning"></i> 
+                    Signalé il y a <strong>{{ incident.created_at|timesince }}</strong>
+                </p>
+                <p class="mb-1">
+                    <i class="fas fa-sync-alt text-info"></i> 
+                    <strong>{{ updates.count }}</strong> mises à jour
+                </p>
+                {% if incident.resolved_at %}
+                <p class="mb-0">
+                    <i class="fas fa-check-circle text-success"></i> 
+                    Résolu le <strong>{{ incident.resolved_at|date:"d/m/Y" }}</strong>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Share -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Partager</h5>
+            </div>
+            <div class="card-body text-center">
+                <button class="btn btn-outline-primary me-2">
+                    <i class="fab fa-facebook"></i>
+                </button>
+                <button class="btn btn-outline-info me-2">
+                    <i class="fab fa-twitter"></i>
+                </button>
+                <button class="btn btn-outline-success" onclick="copyLink()">
+                    <i class="fas fa-link"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Lien copié dans le presse-papier!');
+    });
+}
+</script>
+{% endblock %}

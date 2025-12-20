@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% if messages %}
+<div class="position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+        <div class="toast show shadow-lg mb-3"
+             style="min-width: 300px;">
+            <div class="toast-header bg-success text-white">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong class="me-auto">Succès</strong>
+                <button type="button" class="btn-close btn-close-white"
+                        data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                {{ message }}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- TITLE -->
+    <div class="mb-4">
+        <h2 class="fw-bold">
+            <i class="fas fa-cog me-2"></i> Paramètres
+        </h2>
+        <p class="text-muted">
+            Gérez vos informations personnelles et vos préférences.
+        </p>
+    </div>
+
+    <div class="row">
+
+        <!-- SIDEBAR -->
+        <div class="col-md-3 mb-3">
+            <div class="list-group shadow-sm">
+                <a href="#profile" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-user me-2"></i> Profil
+                </a>
+                <a href="#security" class="list-group-item list-group-item-action">
+                    <i class="fas fa-lock me-2"></i> Sécurité
+                </a>
+                <a href="#notifications" class="list-group-item list-group-item-action">
+                    <i class="fas fa-bell me-2"></i> Notifications
+                </a>
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="col-md-9">
+
+            <!-- PROFILE -->
+            <div id="profile" class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold">
+                    <i class="fas fa-id-card me-2"></i> Informations du profil
+                </div>
+                <div class="card-body">
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_profile">
+
+                        <div class="mb-3">
+                            <label class="form-label">Nom d’utilisateur</label>
+                            <input type="text"
+                                   class="form-control"
+                                   value="{{ user.username }}"
+                                   disabled>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Adresse email</label>
+                            {{ profile_form.email }}
+                        </div>
+
+                        <button class="btn btn-primary" id="save-profile-btn">
+                            <span class="btn-text">
+                                <i class="fas fa-save me-1"></i> Enregistrer
+                            </span>
+                            <span class="spinner-border spinner-border-sm d-none"></span>
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+
+            <!-- SECURITY -->
+            <div id="security" class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold">
+                    <i class="fas fa-shield-alt me-2"></i> Sécurité
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Modifiez votre mot de passe pour sécuriser votre compte.
+                    </p>
+
+                    <a href="{% url 'password_change' %}?next=/settings/"
+                       class="btn btn-outline-danger">
+                        <i class="fas fa-key me-1"></i> Changer le mot de passe
+                    </a>
+                </div>
+            </div>
+
+            <!-- NOTIFICATIONS -->
+            <div id="notifications" class="card shadow-sm">
+                <div class="card-header fw-semibold">
+                    <i class="fas fa-bell me-2"></i> Notifications
+                </div>
+                <div class="card-body">
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_notifications">
+
+                        <div class="form-check form-switch mb-2">
+                            {{ notification_form.email_notifications }}
+                            <label class="form-check-label">
+                                Recevoir des notifications par email
+                            </label>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            {{ notification_form.incident_alerts }}
+                            <label class="form-check-label">
+                                Alertes pour nouveaux signalements
+                            </label>
+                        </div>
+
+                        <button class="btn btn-primary btn-sm" id="save-notifications-btn">
+                            <span class="btn-text">Sauvegarder</span>
+                            <span class="spinner-border spinner-border-sm d-none"></span>
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

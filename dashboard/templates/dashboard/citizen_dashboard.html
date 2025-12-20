@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de Bord Citoyen - CitySync{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="fas fa-user"></i> Mon Tableau de Bord</h1>
+        <p class="lead">Bienvenue {{ user.username }}! Voici votre activité sur CitySync.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'incidents:report_incident' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nouveau Signalement
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">{{ total_reported }}</h3>
+                <p class="mb-0">Signalements Totaux</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">{{ resolved }}</h3>
+                <p class="mb-0">Résolus</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning">{{ in_progress }}</h3>
+                <p class="mb-0">En Cours</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-info">{{ city_alerts|length }}</h3>
+                <p class="mb-0">Alertes à {{ user_city }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Activity -->
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-history"></i> Mes Activités Récentes</h4>
+            </div>
+            <div class="card-body">
+                {% if recent_activity %}
+                    {% for incident in recent_activity %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ incident.title }}</h5>
+                                <p class="card-text">{{ incident.description|truncatechars:150 }}</p>
+                                <div class="d-flex justify-content-between">
+                                    <span class="badge bg-{{ incident.urgency }}">
+                                        {{ incident.get_urgency_display }}
+                                    </span>
+                                    <span class="badge bg-secondary">
+                                        {{ incident.get_status_display }}
+                                    </span>
+                                    <small class="text-muted">
+                                        {{ incident.created_at|timesince }}
+                                    </small>
+                                </div>
+                                <a href="{% url 'incidents:incident_detail' incident.id %}" class="btn btn-sm btn-outline-primary mt-2">
+                                    Voir détails
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="text-center">
+                        <a href="{% url 'incidents:my_incidents' %}" class="btn btn-primary">
+                            <i class="fas fa-list"></i> Voir tous mes signalements
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h4>Aucune activité récente</h4>
+                        <p class="text-muted">Vous n'avez pas encore signalé d'incidents.</p>
+                        <a href="{% url 'incidents:report_incident' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Faire votre premier signalement
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- City Alerts -->
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h4 class="mb-0"><i class="fas fa-bell"></i> Alertes pour {{ user_city }}</h4>
+            </div>
+            <div class="card-body">
+                {% if city_alerts %}
+                    {% for alert in city_alerts %}
+                        <div class="alert alert-{{ alert.severity }} mb-2">
+                            <h6>{{ alert.title }}</h6>
+                            <small>{{ alert.description|truncatechars:100 }}</small>
+                            <br>
+                            <small><i class="fas fa-clock"></i> {{ alert.issued_at|timesince }}</small>
+                            <a href="{% url 'alerts:alert_detail' alert.id %}" class="btn btn-sm btn-outline-{{ alert.severity }} float-end">
+                                Détails
+                            </a>
+                        </div>
+                    {% endfor %}
+                    <div class="text-center">
+                        <a href="{% url 'alerts:alert_list' %}" class="btn btn-outline-warning">
+                            <i class="fas fa-bell"></i> Voir toutes les alertes
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-bell-slash fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Aucune alerte active pour {{ user_city }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="fas fa-bolt"></i> Actions Rapides</h4>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'incidents:report_incident' %}" class="btn btn-primary">
+                        <i class="fas fa-exclamation-triangle"></i> Signaler un problème
+                    </a>
+                    <a href="{% url 'alerts:my_subscriptions' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-cog"></i> Gérer mes alertes
+                    </a>
+                    <a href="{% url 'profile' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-user"></i> Modifier mon profil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

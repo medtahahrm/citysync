@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mon Profil | CitySync{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 👇 PASTE THE AVATAR CSS HERE */
+.avatar-wrapper {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+.avatar-img,
+.avatar-fallback {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #0d6efd, #42a5f5);
+    box-shadow: 0 15px 35px rgba(0,0,0,.25);
+    transition: transform .3s ease;
+}
+
+.avatar-wrapper:hover .avatar-img,
+.avatar-wrapper:hover .avatar-fallback {
+    transform: scale(1.05);
+}
+
+.avatar-upload {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #0d6efd;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0,0,0,.3);
+    transition: all .2s ease;
+}
+
+.avatar-upload:hover {
+    background: #084298;
+    transform: scale(1.1);
+}
+
+.avatar-upload input {
+    display: none;
+}
+
+
+.profile-card {
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,.08);
+}
+.avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.badge-verify {
+    background: #ffc107;
+    color: #000;
+    font-size: .8rem;
+}
+.fade-in {
+    animation: fade .6s ease;
+}
+@keyframes fade {
+    from {opacity:0; transform: translateY(10px);}
+    to {opacity:1;}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row fade-in">
+
+<!-- LEFT CARD -->
+<div class="col-md-4">
+    <div class="card profile-card p-4 text-center position-relative">
+
+        <!-- AVATAR -->
+        <div class="avatar-wrapper mx-auto mb-3">
+            {% if citizen.profile_picture %}
+                <img src="{{ citizen.profile_picture.url }}" class="avatar-img">
+            {% else %}
+                <div class="avatar-fallback">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+            {% endif %}
+
+            <!-- Upload button -->
+            <label class="avatar-upload">
+                <i class="fas fa-camera"></i>
+                <input type="file" name="profile_picture" form="profile-form">
+            </label>
+        </div>
+
+        <h4 class="mb-0">{{ request.user.username }}</h4>
+        <p class="text-muted mb-2">Citoyen</p>
+
+        {% if citizen.verified %}
+            <span class="badge bg-success px-3 py-2">✔ Compte vérifié</span>
+        {% else %}
+            <span class="badge bg-warning text-dark px-3 py-2">
+                ⏳ En attente de vérification
+            </span>
+        {% endif %}
+
+        <hr>
+
+        <p class="mb-1">
+            <i class="fas fa-envelope text-primary"></i>
+            {{ request.user.email }}
+        </p>
+
+        <p class="mb-1">
+            <i class="fas fa-phone text-success"></i>
+            {{ request.user.phone_number|default:"—" }}
+        </p>
+
+        <p class="mb-0">
+            <i class="fas fa-map-marker-alt text-danger"></i>
+            {{ request.user.city|default:"—" }}
+        </p>
+
+    </div>
+</div>
+
+
+    <!-- RIGHT FORM -->
+    <div class="col-md-8">
+        <div class="card profile-card p-4">
+
+            <h5 class="mb-4"><i class="fas fa-user-edit"></i> Modifier mon profil</h5>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Email</label>
+                        {{ user_form.email }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Profession</label>
+                        {{ citizen_form.profession }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Date de naissance</label>
+                        {{ citizen_form.date_of_birth }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Contact d'urgence</label>
+                        {{ citizen_form.emergency_contact }}
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label>Photo de profil</label>
+                        {{ citizen_form.profile_picture }}
+                    </div>
+                </div>
+
+                <div class="text-end">
+                    <button class="btn btn-primary px-4">
+                        <i class="fas fa-save"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

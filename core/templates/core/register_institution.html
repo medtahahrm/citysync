@@ -1,0 +1,105 @@
+<!-- core/templates/core/register_institution.html -->
+{% extends 'base.html' %}
+
+{% block title %}Institution - CitySync{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-building"></i> Inscription Institution</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <h5 class="mb-3">Informations du compte</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nom d'utilisateur *</label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email *</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Mot de passe *</label>
+                            <input type="password" name="password1" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Confirmer le mot de passe *</label>
+                            <input type="password" name="password2" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Téléphone</label>
+                            <input type="text" name="phone_number" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ville</label>
+                            <input type="text" name="city" class="form-control" value="Casablanca">
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h5 class="mb-3">Informations institutionnelles</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Type d'institution *</label>
+                            <select name="institution_type" class="form-select" required>
+                                <option value="">Sélectionnez...</option>
+                                <option value="mairie">Mairie/Commune</option>
+                                <option value="police">Police</option>
+                                <option value="pompiers">Pompiers</option>
+                                <option value="sante">Santé</option>
+                                <option value="education">Éducation</option>
+                                <option value="environnement">Environnement</option>
+                                <option value="transport">Transport</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nom officiel *</label>
+                            <input type="text" name="official_name" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Numéro d'enregistrement *</label>
+                            <input type="text" name="registration_number" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Département</label>
+                            <input type="text" name="department" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Vérification requise:</strong> Les comptes institutionnels nécessitent une vérification manuelle. 
+                        Vous recevrez un email une fois votre compte approuvé.
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-building"></i> Créer le compte institution
+                        </button>
+                        <a href="{% url 'login' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-sign-in-alt"></i> Déjà un compte? Se connecter
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

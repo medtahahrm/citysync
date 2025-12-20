@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profil Institution - CitySync{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Institution Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    {% if user.institution_profile.logo %}
+                        <img src="{{ user.institution_profile.logo.url }}" class="mb-3" width="150" style="object-fit: contain;">
+                    {% else %}
+                        <div class="bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+                            <i class="fas fa-building fa-4x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <h4>{{ user.institution_profile.official_name }}</h4>
+                    <p class="text-muted">{{ user.institution_profile.get_institution_type_display }}</p>
+                    
+                    <div class="list-group list-group-flush mt-3">
+                        <div class="list-group-item">
+                            <i class="fas fa-user-tie text-primary me-2"></i>
+                            {{ user.username }}
+                        </div>
+                        <div class="list-group-item">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            {{ user.email }}
+                        </div>
+                        {% if user.phone_number %}
+                        <div class="list-group-item">
+                            <i class="fas fa-phone text-primary me-2"></i>
+                            {{ user.phone_number }}
+                        </div>
+                        {% endif %}
+                        <div class="list-group-item">
+                            <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                            {{ user.institution_profile.jurisdiction_area|default:"Zone non spécifiée" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <!-- Edit Institution Profile -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-building"></i> Profil Institution</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_profile" value="1">
+                        
+                        <h6 class="mb-3"><i class="fas fa-user"></i> Informations du compte</h6>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                {{ user_form.email }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Téléphone</label>
+                                {{ user_form.phone_number }}
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <h6 class="mb-3"><i class="fas fa-university"></i> Informations institutionnelles</h6>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Type d'institution</label>
+                                {{ profile_form.institution_type }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nom officiel</label>
+                                {{ profile_form.official_name }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Numéro d'enregistrement</label>
+                                {{ profile_form.registration_number }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Département</label>
+                                {{ profile_form.department }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Zone de compétence</label>
+                                {{ profile_form.jurisdiction_area }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Logo</label>
+                                {{ profile_form.logo }}
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Mettre à jour
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

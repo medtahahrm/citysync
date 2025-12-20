@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Alertes - CitySync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alert-card {
+        border-left: 5px solid;
+        margin-bottom: 15px;
+        transition: transform 0.2s;
+    }
+    .alert-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .alert-info { border-left-color: #0dcaf0; }
+    .alert-warning { border-left-color: #ffc107; }
+    .alert-danger { border-left-color: #dc3545; }
+    .alert-critical { border-left-color: #dc3545; border-left-width: 8px; }
+    .severity-badge {
+        font-size: 0.8rem;
+        padding: 3px 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="fas fa-bell"></i> Alertes</h1>
+        <p class="lead">Restez informé des alertes en temps réel dans votre ville</p>
+    </div>
+    <div class="col-md-4 text-end">
+        {% if user.is_authenticated %}
+            <a href="{% url 'alerts:my_subscriptions' %}" class="btn btn-outline-primary">
+                <i class="fas fa-cog"></i> Mes Notifications
+            </a>
+        {% endif %}
+        {% if user.is_authenticated and user.user_type == 'institution' %}
+            <a href="{% url 'alerts:create_alert' %}" class="btn btn-primary ms-2">
+                <i class="fas fa-plus"></i> Nouvelle Alerte
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">{{ total_active }}</h3>
+                <p class="mb-0">Alertes actives</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning">{{ warning_count }}</h3>
+                <p class="mb-0">Avertissements</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-danger">{{ danger_count }}</h3>
+                <p class="mb-0">Dangers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-dark">{{ expired_count }}</h3>
+                <p class="mb-0">Expirées</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Alerts -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0"><i class="fas fa-bell"></i> Alertes Actives</h4>
+    </div>
+    <div class="card-body">
+        {% if active_alerts %}
+            {% for alert in active_alerts %}
+                <div class="card alert-card alert-{{ alert.severity }} mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <h5 class="card-title">
+                                    <a href="{% url 'alerts:alert_detail' alert.id %}" class="text-decoration-none">
+                                        {{ alert.title }}
+                                    </a>
+                                    <span class="badge bg-{{ alert.severity }} severity-badge ms-2">
+                                        {{ alert.get_severity_display }}
+                                    </span>
+                                    {% if alert.alert_type %}
+                                        <span class="badge bg-info severity-badge ms-1">
+                                            {{ alert.alert_type.name }}
+                                        </span>
+                                    {% endif %}
+                                </h5>
+                                <p class="card-text">{{ alert.description|truncatechars:200 }}</p>
+                                <div class="d-flex">
+                                    <small class="text-muted me-3">
+                                        <i class="fas fa-map-marker-alt"></i> {{ alert.affected_areas|truncatechars:50 }}
+                                    </small>
+                                    <small class="text-muted me-3">
+                                        <i class="fas fa-clock"></i> {{ alert.issued_at|timesince }}
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-hourglass-end"></i> Expire dans {{ alert.valid_until|timeuntil }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <a href="{% url 'alerts:alert_detail' alert.id %}" class="btn btn-sm btn-outline-{{ alert.severity }}">
+                                    <i class="fas fa-info-circle"></i> Détails
+                                </a>
+                                {% if user.is_authenticated %}
+                                    <a href="{% url 'alerts:mark_as_read' alert.id %}" class="btn btn-sm btn-outline-secondary mt-1">
+                                        <i class="fas fa-check"></i> Marquer comme lu
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                <h4>Aucune alerte active</h4>
+                <p class="text-muted">Aucune alerte n'est actuellement active dans votre région.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Expired Alerts (Collapsible) -->
+{% if expired_alerts %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <button class="btn btn-link text-decoration-none" data-bs-toggle="collapse" data-bs-target="#expiredAlerts">
+                <i class="fas fa-history"></i> Alertes Récentes Expirées
+                <span class="badge bg-secondary">{{ expired_count }}</span>
+            </button>
+        </h5>
+    </div>
+    <div id="expiredAlerts" class="collapse">
+        <div class="card-body">
+            {% for alert in expired_alerts %}
+                <div class="card mb-2 border-secondary">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted">
+                                    <strong>{{ alert.title }}</strong> - 
+                                    {{ alert.alert_type.name|default:"Général" }}
+                                </small>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i> {{ alert.issued_at|date:"d/m/Y H:i" }} - 
+                                    Expirée le {{ alert.valid_until|date:"d/m/Y H:i" }}
+                                </small>
+                            </div>
+                            <a href="{% url 'alerts:alert_detail' alert.id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

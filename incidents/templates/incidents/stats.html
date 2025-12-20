@@ -1,0 +1,312 @@
+<!-- incidents/templates/incidents/stats.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Statistiques - CitySync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        transition: transform 0.3s;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+    .progress {
+        height: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1><i class="fas fa-chart-bar"></i> Statistiques des Signalements</h1>
+            <p class="lead">Analyse et tendances des incidents signalés</p>
+        </div>
+    </div>
+    
+    {% if error %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle"></i> 
+        Erreur lors du chargement des statistiques: {{ error }}
+    </div>
+    {% endif %}
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card border-primary">
+                <div class="card-body text-center">
+                    <h2 class="text-primary">{{ total_incidents }}</h2>
+                    <p class="mb-0">Signalements totaux</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card border-success">
+                <div class="card-body text-center">
+                    <h2 class="text-success">{{ resolved_incidents }}</h2>
+                    <p class="mb-0">Signalements résolus</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card border-info">
+                <div class="card-body text-center">
+                    <h2 class="text-info">
+                        {% if total_incidents > 0 %}
+                            {{ resolved_incidents|floatformat:0 }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </h2>
+                    <p class="mb-0">Taux de résolution</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card border-warning">
+                <div class="card-body text-center">
+                    <h2 class="text-warning">{{ avg_resolution_time|floatformat:1 }}</h2>
+                    <p class="mb-0">Heures moyennes de résolution</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- Status Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-tasks"></i> Distribution par Statut</h5>
+                </div>
+                <div class="card-body">
+                    {% if status_stats %}
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted my-5">Aucune donnée disponible</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Category Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-tags"></i> Top Catégories</h5>
+                </div>
+                <div class="card-body">
+                    {% if category_stats %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Catégorie</th>
+                                        <th>Nombre</th>
+                                        <th>Pourcentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stat in category_stats|slice:":10" %}
+                                    <tr>
+                                        <td>{{ stat.category__name|default:"Non catégorisé" }}</td>
+                                        <td>{{ stat.count }}</td>
+                                        <td>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-success" 
+                                                     style="width: {% widthratio stat.count total_incidents 100 %}%">
+                                                    {% widthratio stat.count total_incidents 100 %}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted my-5">Aucune donnée disponible</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cities and Monthly Trends -->
+    <div class="row">
+        <!-- Top Cities -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> Top Villes</h5>
+                </div>
+                <div class="card-body">
+                    {% if city_stats %}
+                        <div class="chart-container">
+                            <canvas id="cityChart"></canvas>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted my-5">Aucune donnée disponible</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Monthly Trends -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Tendance Mensuelle</h5>
+                </div>
+                <div class="card-body">
+                    {% if monthly_stats %}
+                        <div class="chart-container">
+                            <canvas id="monthlyChart"></canvas>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted my-5">Aucune donnée disponible</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if status_stats %}
+    // Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusLabels = [];
+    const statusData = [];
+    const statusColors = [];
+    
+    {% for stat in status_stats %}
+        statusLabels.push('{{ stat.status|title }}');
+        statusData.push({{ stat.count }});
+        {% if stat.status == 'resolved' %}
+            statusColors.push('#28a745');
+        {% elif stat.status == 'in_progress' %}
+            statusColors.push('#ffc107');
+        {% elif stat.status == 'reported' %}
+            statusColors.push('#dc3545');
+        {% else %}
+            statusColors.push('#6c757d');
+        {% endif %}
+    {% endfor %}
+    
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusData,
+                backgroundColor: statusColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    {% if city_stats %}
+    // City Chart
+    const cityCtx = document.getElementById('cityChart').getContext('2d');
+    const cityLabels = [];
+    const cityData = [];
+    
+    {% for stat in city_stats|slice:":5" %}
+        cityLabels.push('{{ stat.city|default:"Inconnu" }}');
+        cityData.push({{ stat.count }});
+    {% endfor %}
+    
+    new Chart(cityCtx, {
+        type: 'bar',
+        data: {
+            labels: cityLabels,
+            datasets: [{
+                label: 'Signalements',
+                data: cityData,
+                backgroundColor: '#007bff',
+                borderColor: '#0056b3',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    {% if monthly_stats %}
+    // Monthly Chart
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyLabels = [];
+    const monthlyData = [];
+    
+    {% for stat in monthly_stats %}
+        monthlyLabels.push('{{ stat.month|date:"M Y" }}');
+        monthlyData.push({{ stat.count }});
+    {% endfor %}
+    
+    new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: 'Signalements',
+                data: monthlyData,
+                borderColor: '#ffc107',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

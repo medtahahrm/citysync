@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Signalements - CitySync{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="fas fa-exclamation-circle"></i> Signalements</h1>
+        <p class="lead">Liste des incidents signalés par les citoyens</p>
+    </div>
+    <div class="col-md-4 text-end">
+        {% if user.is_authenticated and user.user_type == 'citizen' %}
+            <a href="{% url 'incidents:report_incident' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nouveau Signalement
+            </a>
+        {% endif %}
+        <a href="{% url 'incidents:incident_stats' %}" class="btn btn-info">
+            <i class="fas fa-chart-bar"></i> Statistiques
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Catégorie</label>
+                <select name="category" class="form-select">
+                    <option value="">Toutes les catégories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"i" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Ville</label>
+                <input type="text" name="city" class="form-control" placeholder="Entrez une ville" 
+                       value="{{ request.GET.city }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Statut</label>
+                <select name="status" class="form-select">
+                    <option value="">Tous les statuts</option>
+                    <option value="reported" {% if request.GET.status == 'reported' %}selected{% endif %}>Signalé</option>
+                    <option value="verified" {% if request.GET.status == 'verified' %}selected{% endif %}>Vérifié</option>
+                    <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>En cours</option>
+                    <option value="resolved" {% if request.GET.status == 'resolved' %}selected{% endif %}>Résolu</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i> Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">{{ total_count }}</h3>
+                <p class="mb-0">Total des signalements</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">{{ resolved_count }}</h3>
+                <p class="mb-0">Résolus</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning">{{ in_progress_count }}</h3>
+                <p class="mb-0">En cours</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-danger">{{ reported_count }}</h3>
+                <p class="mb-0">Nouveaux</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Incidents List -->
+{% if incidents %}
+    {% for incident in incidents %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="card-title">
+                            <a href="{% url 'incidents:incident_detail' incident.id %}" class="text-decoration-none">
+                                {{ incident.title }}
+                            </a>
+                            <span class="badge bg-{{ incident.urgency }} ms-2">
+                                {{ incident.get_urgency_display }}
+                            </span>
+                            <span class="badge bg-secondary ms-1">
+                                {{ incident.get_status_display }}
+                            </span>
+                        </h5>
+                        <p class="card-text">{{ incident.description|truncatechars:200 }}</p>
+                        <div class="d-flex">
+                            <small class="text-muted me-3">
+                                <i class="fas fa-map-marker-alt"></i> {{ incident.city }}
+                            </small>
+                            <small class="text-muted me-3">
+                                <i class="fas fa-clock"></i> {{ incident.created_at|timesince }}
+                            </small>
+                            <small class="text-muted">
+                                <i class="fas fa-eye"></i> {{ incident.view_count }} vues
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        {% if incident.category %}
+                            <span class="badge bg-info">{{ incident.category.name }}</span>
+                        {% endif %}
+                        <div class="mt-2">
+                            {% if incident.image %}
+                                <i class="fas fa-image text-success" title="Avec photo"></i>
+                            {% endif %}
+                            {% if incident.video %}
+                                <i class="fas fa-video text-success" title="Avec vidéo"></i>
+                            {% endif %}
+                        </div>
+                        <a href="{% url 'incidents:incident_detail' incident.id %}" class="btn btn-sm btn-outline-primary mt-2">
+                            Voir les détails
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <h3>Aucun signalement trouvé</h3>
+        <p class="text-muted">Aucun incident ne correspond à vos critères de recherche.</p>
+        {% if user.is_authenticated and user.user_type == 'citizen' %}
+            <a href="{% url 'incidents:report_incident' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Soyez le premier à signaler
+            </a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ alert.title }} - CitySync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alert-header {
+        border-radius: 10px;
+        padding: 20px;
+        color: white;
+        margin-bottom: 20px;
+    }
+    .severity-info { background: linear-gradient(135deg, #0dcaf0, #0aa2c0); }
+    .severity-warning { background: linear-gradient(135deg, #ffc107, #e0a800); }
+    .severity-danger { background: linear-gradient(135deg, #dc3545, #c82333); }
+    .severity-critical { background: linear-gradient(135deg, #dc3545, #721c24); }
+    .instruction-card {
+        border-left: 4px solid #198754;
+        background-color: #f8f9fa;
+    }
+    .area-badge {
+        background-color: #e9ecef;
+        color: #495057;
+        padding: 5px 10px;
+        border-radius: 20px;
+        margin: 2px;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Alert Header -->
+        <div class="alert-header severity-{{ alert.severity }}">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1 class="h2">{{ alert.title }}</h1>
+                    <div class="d-flex align-items-center mt-2">
+                        <span class="badge bg-light text-dark me-2">
+                            <i class="fas fa-exclamation-triangle"></i> {{ alert.get_severity_display }}
+                        </span>
+                        {% if alert.alert_type %}
+                            <span class="badge bg-light text-dark me-2">
+                                {{ alert.alert_type.name }}
+                            </span>
+                        {% endif %}
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-clock"></i> {{ alert.issued_at|date:"d/m/Y H:i" }}
+                        </span>
+                    </div>
+                </div>
+                <div class="text-end">
+                    {% if user.is_authenticated and user.user_type == 'institution' %}
+                        <a href="#" class="btn btn-light">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Main Content -->
+    <div class="col-md-8">
+        <!-- Alert Description -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Description</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ alert.description|linebreaks }}</p>
+                
+                {% if alert.source %}
+                    <p class="mb-0">
+                        <strong>Source:</strong> {{ alert.source }}
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Instructions -->
+        {% if alert.instructions %}
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Instructions & Recommandations</h5>
+            </div>
+            <div class="card-body instruction-card">
+                {{ alert.instructions|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Emergency Contacts -->
+        {% if alert.emergency_numbers %}
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-phone"></i> Contacts d'Urgence</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for number in alert.emergency_numbers.splitlines %}
+                        {% if number.strip %}
+                            <div class="col-md-6 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-phone-alt text-danger me-2"></i>
+                                    <span>{{ number.strip }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Alert Status -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Statut de l'Alerte</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <p class="mb-1"><strong>Statut:</strong></p>
+                    <span class="badge bg-{% if alert.is_active %}success{% else %}secondary{% endif %}">
+                        {% if alert.is_active %}
+                            <i class="fas fa-check-circle"></i> Active
+                        {% else %}
+                            <i class="fas fa-times-circle"></i> Expirée
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="mb-3">
+                    <p class="mb-1"><strong>Émise par:</strong></p>
+                    <p class="mb-0">
+                        {% if alert.issued_by.institution_profile %}
+                            {{ alert.issued_by.institution_profile.official_name }}
+                        {% else %}
+                            {{ alert.issued_by.username|default:"Système" }}
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="mb-3">
+                    <p class="mb-1"><strong>Émise le:</strong></p>
+                    <p class="mb-0">{{ alert.issued_at|date:"d/m/Y à H:i" }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <p class="mb-1"><strong>Valide jusqu'au:</strong></p>
+                    <p class="mb-0">{{ alert.valid_until|date:"d/m/Y à H:i" }}</p>
+                    <small class="text-{% if alert.is_active %}success{% else %}danger{% endif %}">
+                        {% if alert.is_active %}
+                            Expire dans {{ alert.valid_until|timeuntil }}
+                        {% else %}
+                            Expirée il y a {{ alert.valid_until|timesince }}
+                        {% endif %}
+                    </small>
+                </div>
+                
+                {% if user.is_authenticated %}
+                    <div class="d-grid">
+                        <a href="{% url 'alerts:mark_as_read' alert.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-check"></i> Marquer comme lu
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Affected Areas -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Zones Affectées</h5>
+            </div>
+            <div class="card-body">
+                {% if alert.affected_areas %}
+                    <p>{{ alert.affected_areas|linebreaks }}</p>
+                {% else %}
+                    <p class="text-muted">Toutes zones</p>
+                {% endif %}
+                
+                {% if alert.latitude and alert.longitude %}
+                    <p class="mb-1">
+                        <small class="text-muted">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ alert.latitude|floatformat:4 }}, {{ alert.longitude|floatformat:4 }}
+                            {% if alert.radius_km %}
+                                (Rayon: {{ alert.radius_km }} km)
+                            {% endif %}
+                        </small>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Share & Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Partager</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary">
+                        <i class="fab fa-facebook"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-info">
+                        <i class="fab fa-twitter"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-success">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="copyAlertLink()">
+                        <i class="fas fa-link"></i>
+                    </button>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'alerts:alert_list' %}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-arrow-left"></i> Retour aux alertes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyAlertLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Lien de l\'alerte copié dans le presse-papier!');
+    });
+}
+</script>
+{% endblock %}
