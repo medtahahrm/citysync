@@ -14,7 +14,24 @@ from .forms import (
 from .models import User, CitizenProfile, InstitutionProfile, UserNotificationSettings
 from incidents.models import Incident
 from alerts.models import Alert
+import os, json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .chatbot import ollama_chat
 
+@csrf_exempt
+def api_chat(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        msg = data.get("message", "")
+
+        if not msg.strip():
+            return JsonResponse({"reply": "Écris quelque chose 🙂"})
+
+        reply = ollama_chat(msg)
+        return JsonResponse({"reply": reply})
+
+    return JsonResponse({"error": "Only POST allowed"}, status=405)
 
 # Home page
 def home(request):

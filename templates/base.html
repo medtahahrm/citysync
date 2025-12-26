@@ -427,75 +427,127 @@
     </div>
 </footer>
 
-<!-- AI CHATBOT BUTTON -->
-<div id="chatbot-button">
-    🤖
-</div>
-
-<!-- AI CHATBOT WINDOW -->
-<div id="chatbot-window">
-    <div class="chat-header">
-        CitySync Assistant
-        <span id="chat-close">×</span>
-    </div>
-    <div id="chat-messages"></div>
-    <div class="chat-input">
-        <input type="text" id="chat-input" placeholder="Posez votre question...">
-        <button onclick="sendMessage()">➤</button>
-    </div>
-</div>
-
 <!-- ================= JS ================= -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-const btn = document.getElementById("chatbot-button");
-const win = document.getElementById("chatbot-window");
-const closeBtn = document.getElementById("chat-close");
-const messages = document.getElementById("chat-messages");
+document.addEventListener("DOMContentLoaded", function () {
+    const btn = document.getElementById("chatbot-btn");
+    const win = document.getElementById("chatbot-window");
 
-btn.onclick = () => win.style.display = "flex";
-closeBtn.onclick = () => win.style.display = "none";
+    if (!btn || !win) {
+        console.log("❌ chatbot elements not found!");
+        return;
+    }
 
-function sendMessage() {
+    btn.addEventListener("click", function () {
+        console.log("✅ clicked");
+        win.style.display = (win.style.display === "flex") ? "none" : "flex";
+    });
+});
+
+async function sendMessage() {
     const input = document.getElementById("chat-input");
-    const text = input.value.trim();
-    if (!text) return;
+    const msg = input.value.trim();
+    if (!msg) return;
 
-    messages.innerHTML += `<div><strong>Vous:</strong> ${text}</div>`;
+    const chatBox = document.getElementById("chat-messages");
+
+    chatBox.innerHTML += `<div style="margin-bottom:10px;"><b>Vous:</b> ${msg}</div>`;
     input.value = "";
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-    setTimeout(() => {
-        messages.innerHTML += `<div><strong>AI:</strong> ${aiReply(text)}</div>`;
-        messages.scrollTop = messages.scrollHeight;
-    }, 600);
+    const loadingId = "loading-" + Date.now();
+    chatBox.innerHTML += `<div id="${loadingId}" style="margin-bottom:10px;"><b>Bot:</b> ⏳ ...</div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    try {
+        const response = await fetch("/api/chat/", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({message: msg})
+        });
+
+        const data = await response.json();
+        document.getElementById(loadingId).innerHTML = `<b>Bot:</b> ${data.reply}`;
+    } catch (err) {
+        document.getElementById(loadingId).innerHTML = `<b>Bot:</b> ❌ Error: ${err}`;
+    }
+
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
-
-function aiReply(text) {
-    text = text.toLowerCase();
-
-    if (text.includes("signaler"))
-        return "Pour signaler un incident, cliquez sur 'Signaler' puis remplissez le formulaire.";
-
-    if (text.includes("incident"))
-        return "Un incident est vérifié par les institutions avant résolution.";
-
-    if (text.includes("alerte"))
-        return "Les alertes concernent les dangers importants dans votre ville.";
-
-    if (text.includes("profil"))
-        return "Vous pouvez modifier votre profil depuis le menu utilisateur.";
-
-    return "Je suis là pour vous aider 😊. Posez une question sur CitySync.";
-}
-</script>
-
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    document.body.classList.add("page-loaded");
-  });
-</script>
+</script>>
 
 {% block extra_js %}{% endblock %}
+<!-- ✅ Chatbot Floating Button -->
+<div id="chatbot-btn"
+     style="
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        background: #dc3545;
+        color: white;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 26px;
+        cursor: pointer;
+        box-shadow: 0px 6px 18px rgba(0,0,0,.25);
+        z-index: 9999;
+     ">
+    🤖
+</div>
+
+<!-- ✅ Chatbot Window -->
+<div id="chatbot-window"
+     style="
+        position: fixed;
+        bottom: 100px;
+        right: 25px;
+        width: 340px;
+        height: 460px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0px 10px 30px rgba(0,0,0,.2);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 9999;
+     ">
+
+    <!-- Header -->
+    <div style="background:#dc3545; padding: 15px; color:white; display:flex; justify-content:space-between;">
+        <strong>CitySync Assistant</strong>
+        <span style="cursor:pointer;" onclick="document.getElementById('chatbot-window').style.display='none'">✖</span>
+    </div>
+
+    <!-- Messages -->
+    <div id="chat-messages"
+         style="
+            flex:1;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 14px;
+            background:#f8f9fa;
+         ">
+        <div style="margin-bottom:10px;">
+            <b>Bot:</b> Bonjour 👋 Je suis là pour vous aider.
+        </div>
+    </div>
+
+    <!-- Input -->
+    <div style="padding:10px; display:flex; gap:10px; border-top:1px solid #ddd;">
+        <input type="text" id="chat-input" placeholder="Écris un message..."
+               style="flex:1; border:1px solid #ccc; border-radius:10px; padding:8px;">
+        <button onclick="sendMessage()"
+                style="background:#dc3545; color:white; border:none; border-radius:10px; padding:8px 14px;">
+            ➤
+        </button>
+    </div>
+</div>
+
 </body>
 </html>
