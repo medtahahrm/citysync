@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <style>
 /* ---------- GLOBAL ---------- */
 .step-card {
@@ -36,9 +37,11 @@
     border-radius: 14px;
     text-align: center;
     background: #f9fbff;
+    transition: .25s;
 }
 .upload-box:hover {
     background: #eef4ff;
+    transform: scale(1.02);
 }
 .submit-bar {
     background: #fff;
@@ -46,6 +49,10 @@
     padding: 1.2rem;
     position: sticky;
     bottom: 0;
+}
+#locStatus {
+    font-size: 14px;
+    margin-top: 10px;
 }
 </style>
 {% endblock %}
@@ -113,10 +120,32 @@
 
             <div id="map" class="mb-3"></div>
 
+            <!-- Live Status Text -->
+            <div id="locStatus" class="text-muted">
+                📡 Détection de votre position...
+            </div>
+
+            <!-- Hidden Inputs -->
             <input type="hidden" id="latitude" name="latitude">
             <input type="hidden" id="longitude" name="longitude">
+            <input type="hidden" id="radius" name="radius" value="150">
 
-            <div class="row">
+            <!-- Radius Slider -->
+            <div class="mt-4">
+                <label class="form-label fw-bold">
+                    Zone impactée : <span id="radiusLabel" class="text-danger">150 m</span>
+                </label>
+
+                <input type="range" id="radiusSlider" min="50" max="1000" value="150"
+                    class="form-range">
+
+                <small class="text-muted">
+                    Ajuste la zone estimée de l'incident (ex: accident, danger, incendie…)
+                </small>
+            </div>
+
+            <!-- Address -->
+            <div class="row mt-4">
                 <div class="col-md-8 mb-3">
                     <label class="form-label">Adresse *</label>
                     <textarea id="address" name="address" class="form-control" rows="2" required></textarea>
@@ -174,50 +203,130 @@
 
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
     const latInput = document.getElementById("latitude");
     const lngInput = document.getElementById("longitude");
+    const radiusInput = document.getElementById("radius");
+
     const addrInput = document.getElementById("address");
     const cityInput = document.getElementById("city");
+    const locStatus = document.getElementById("locStatus");
+
+    const radiusSlider = document.getElementById("radiusSlider");
+    const radiusLabel  = document.getElementById("radiusLabel");
 
     const map = L.map("map").setView([31.7917, -7.0926], 6);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
 
-    let marker;
+    let marker = null;
+    let circle = null;
+    let lastRequestTime = 0;
+
+    function updateCircle(lat, lng, radius) {
+        if (!circle) {
+            circle = L.circle([lat, lng], {
+                radius: radius,
+                color: "#dc3545",
+                fillColor: "#dc3545",
+                fillOpacity: 0.15
+            }).addTo(map);
+        } else {
+            circle.setLatLng([lat, lng]);
+            circle.setRadius(radius);
+        }
+    }
 
     function setMarker(lat, lng) {
         if (!marker) {
             marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-            marker.on("dragend", e => reverse(e.target.getLatLng()));
+
+            marker.on("dragend", e => {
+                const pos = e.target.getLatLng();
+                reverse(pos);
+                updateCircle(pos.lat, pos.lng, parseInt(radiusSlider.value));
+            });
         } else {
             marker.setLatLng([lat, lng]);
         }
+
         map.setView([lat, lng], 16);
-        reverse({lat, lng});
+        updateCircle(lat, lng, parseInt(radiusSlider.value));
+        reverse({ lat, lng });
     }
 
-    function reverse(pos) {
+    async function reverse(pos) {
+        const now = Date.now();
+        if (now - lastRequestTime < 1000) return;
+        lastRequestTime = now;
+
         latInput.value = pos.lat;
         lngInput.value = pos.lng;
 
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}`)
-        .then(r => r.json())
-        .then(d => {
+        locStatus.innerText = "⏳ Recherche de l’adresse...";
+
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}`, {
+                headers: { "Accept-Language": "fr" }
+            });
+
+            const d = await res.json();
+
+            if (!d || !d.address) {
+                locStatus.innerText = "⚠️ Adresse introuvable. Essayez un autre point.";
+                return;
+            }
+
             addrInput.value = d.display_name || "";
-            cityInput.value = d.address.city || d.address.town || d.address.village || "";
-        });
+
+            const a = d.address;
+            const city =
+                a.city || a.town || a.village || a.municipality ||
+                a.county || a.state_district || a.region || a.province ||
+                a.state || "";
+
+            cityInput.value = city;
+
+            locStatus.innerText = "✅ Adresse détectée automatiquement !";
+
+        } catch (err) {
+            console.error(err);
+            locStatus.innerText = "❌ Erreur réseau. Réessayez.";
+        }
     }
 
     map.on("click", e => setMarker(e.latlng.lat, e.latlng.lng));
 
+    radiusSlider.addEventListener("input", () => {
+        const r = parseInt(radiusSlider.value);
+        radiusLabel.textContent = r + " m";
+        radiusInput.value = r;
+
+        if (marker) {
+            const pos = marker.getLatLng();
+            updateCircle(pos.lat, pos.lng, r);
+        }
+    });
+
+    // default radius init
+    radiusLabel.textContent = radiusSlider.value + " m";
+    radiusInput.value = radiusSlider.value;
+
+    // auto geolocation
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             p => setMarker(p.coords.latitude, p.coords.longitude),
-            () => console.warn("Location denied")
+            () => locStatus.innerText = "📌 Cliquez sur la carte pour choisir un endroit.",
+            { enableHighAccuracy: true, timeout: 7000 }
         );
+    } else {
+        locStatus.innerText = "📌 Cliquez sur la carte pour choisir un endroit.";
     }
+
 });
 </script>
 {% endblock %}

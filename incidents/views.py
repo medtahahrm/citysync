@@ -8,8 +8,28 @@ from .models import Incident, IncidentCategory, IncidentUpdate, InstitutionRespo
 from .forms import IncidentReportForm, IncidentUpdateForm
 import json
 from datetime import datetime, timedelta
+from django.http import JsonResponse
+from .models import Incident
 
-# List all incidents
+def api_incidents(request):
+    incidents = Incident.objects.all().order_by("-created_at")
+
+    data = []
+    for inc in incidents:
+        data.append({
+            "id": inc.id,
+            "title": inc.title,
+            "status": inc.status,
+            "urgency": inc.urgency,
+            "latitude": float(inc.latitude),
+            "longitude": float(inc.longitude),
+        })
+
+    return JsonResponse(data, safe=False)
+
+def incidents_map(request):
+    return render(request, "incidents/incidents_map.html")
+
 def incident_list(request):
     incidents = Incident.objects.all().order_by('-created_at')
     categories = IncidentCategory.objects.all()

@@ -2,6 +2,7 @@
 from django.urls import path
 from . import views
 from .views import api_chat
+from .views import api_incidents
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -12,9 +13,8 @@ urlpatterns = [
     path('register/institution/', views.register_institution, name='register_institution'),
     path("profile/", views.profile, name="profile"),
     # ADD THESE LINES:
-    path('parametres/', views.parametres, name='parametres'),  # Settings page
-    path('mon-profil/', views.mon_profil, name='mon_profil'),  # If needed
     path("api/chat/", views.api_chat, name="api_chat"),
     path("api/chat/", api_chat, name="api_chat"),
+    path("api/incidents/", api_incidents, name="api_incidents"),
     
 ]

@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import incidents_map
 
 app_name = 'incidents'
 
@@ -8,6 +9,7 @@ urlpatterns = [
     path('', views.incident_list, name='incident_list'),
     path('stats/', views.incident_stats, name='incident_stats'),
     path('<int:incident_id>/', views.incident_detail, name='incident_detail'),
+    path("map/", incidents_map, name="incidents_map"),
     
     # Citizen views (require login)
     path('report/', views.report_incident, name='report_incident'),  # ADD THIS LINE

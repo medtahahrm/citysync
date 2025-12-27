@@ -1,6 +1,4 @@
-<!-- core/templates/core/register_institution.html -->
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
 {% block title %}Institution - CitySync{% endblock %}
 
 {% block content %}
@@ -10,93 +8,108 @@
             <div class="card-header bg-success text-white">
                 <h4 class="mb-0"><i class="fas fa-building"></i> Inscription Institution</h4>
             </div>
+
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    
+
+                    <!-- ✅ Errors -->
+                    {% if user_form.errors or institution_form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Erreur :</strong>
+                        <ul class="mb-0">
+                            {% for field in user_form %}
+                                {% for error in field.errors %}
+                                    <li>{{ field.label }} : {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for field in institution_form %}
+                                {% for error in field.errors %}
+                                    <li>{{ field.label }} : {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in user_form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                            {% for error in institution_form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
                     <h5 class="mb-3">Informations du compte</h5>
+
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label">Nom d'utilisateur *</label>
-                            <input type="text" name="username" class="form-control" required>
+                            {{ user_form.username.label_tag }}
+                            {{ user_form.username }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Email *</label>
-                            <input type="email" name="email" class="form-control" required>
+                            {{ user_form.email.label_tag }}
+                            {{ user_form.email }}
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label">Mot de passe *</label>
-                            <input type="password" name="password1" class="form-control" required>
+                            {{ user_form.password1.label_tag }}
+                            {{ user_form.password1 }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Confirmer le mot de passe *</label>
-                            <input type="password" name="password2" class="form-control" required>
+                            {{ user_form.password2.label_tag }}
+                            {{ user_form.password2 }}
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label">Téléphone</label>
-                            <input type="text" name="phone_number" class="form-control">
+                            {{ user_form.phone_number.label_tag }}
+                            {{ user_form.phone_number }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Ville</label>
-                            <input type="text" name="city" class="form-control" value="Casablanca">
+                            {{ user_form.city.label_tag }}
+                            {{ user_form.city }}
                         </div>
                     </div>
-                    
+
                     <hr class="my-4">
-                    
+
                     <h5 class="mb-3">Informations institutionnelles</h5>
+
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label">Type d'institution *</label>
-                            <select name="institution_type" class="form-select" required>
-                                <option value="">Sélectionnez...</option>
-                                <option value="mairie">Mairie/Commune</option>
-                                <option value="police">Police</option>
-                                <option value="pompiers">Pompiers</option>
-                                <option value="sante">Santé</option>
-                                <option value="education">Éducation</option>
-                                <option value="environnement">Environnement</option>
-                                <option value="transport">Transport</option>
-                                <option value="autre">Autre</option>
-                            </select>
+                            {{ institution_form.official_name.label_tag }}
+                            {{ institution_form.official_name }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Nom officiel *</label>
-                            <input type="text" name="official_name" class="form-control" required>
+                            {{ institution_form.institution_type.label_tag }}
+                            {{ institution_form.institution_type }}
                         </div>
                     </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Numéro d'enregistrement *</label>
-                            <input type="text" name="registration_number" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Département</label>
-                            <input type="text" name="department" class="form-control">
+
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            {{ institution_form.department.label_tag }}
+                            {{ institution_form.department }}
                         </div>
                     </div>
-                    
+
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Vérification requise:</strong> Les comptes institutionnels nécessitent une vérification manuelle. 
+                        <strong>Vérification requise :</strong> Les comptes institutionnels nécessitent une vérification manuelle. 
                         Vous recevrez un email une fois votre compte approuvé.
                     </div>
-                    
+
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-building"></i> Créer le compte institution
                         </button>
                         <a href="{% url 'login' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-sign-in-alt"></i> Déjà un compte? Se connecter
+                            <i class="fas fa-sign-in-alt"></i> Déjà un compte ? Se connecter
                         </a>
                     </div>
+
                 </form>
             </div>
         </div>

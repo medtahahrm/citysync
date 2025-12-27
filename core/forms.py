@@ -27,6 +27,18 @@ class UserRegistrationForm(UserCreationForm):
             "password2",
         )
 
+    def clean_username(self):
+        username = self.cleaned_data.get("username")
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("❌ Ce nom d'utilisateur existe déjà.")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("❌ Cet email est déjà utilisé.")
+        return email
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
@@ -50,12 +62,8 @@ class CitizenProfileForm(forms.ModelForm):
             "date_of_birth": forms.DateInput(
                 attrs={"type": "date", "class": "form-control"}
             ),
-            "profession": forms.TextInput(
-                attrs={"class": "form-control"}
-            ),
-            "emergency_contact": forms.TextInput(
-                attrs={"class": "form-control"}
-            ),
+            "profession": forms.TextInput(attrs={"class": "form-control"}),
+            "emergency_contact": forms.TextInput(attrs={"class": "form-control"}),
         }
 
 
@@ -87,9 +95,7 @@ class ProfileForm(forms.ModelForm):
         model = User
         fields = ("email",)
         widgets = {
-            "email": forms.EmailInput(
-                attrs={"class": "form-control"}
-            )
+            "email": forms.EmailInput(attrs={"class": "form-control"})
         }
 
 
