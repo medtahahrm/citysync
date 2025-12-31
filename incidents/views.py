@@ -342,3 +342,122 @@ def quick_report(request):
         'categories': categories,
     }
     return render(request, 'incidents/quick_report.html', context)
+from django.shortcuts import render
+from django.http import JsonResponse
+from ai_model.inference.classifier import ReportClassifier
+
+def test_ai_view(request):
+    """Test page to see AI in action"""
+    # Initialize classifier
+    classifier = ReportClassifier()
+    
+    # Test reports
+    test_reports = [
+        "Fire emergency! Building on fire, people trapped!",
+        "Street light not working on Main Street",
+        "Gas leak detected, strong smell of gas everywhere",
+        "Garbage not collected for 2 weeks",
+        "Car accident with injuries on highway",
+        "Park bench needs painting",
+        "Water main burst flooding the neighborhood",
+        "Loud party disturbing the peace"
+    ]
+    
+    predictions = []
+    
+    # Process each report - FIXED INDENTATION
+    for report in test_reports:
+        result = classifier.predict(report)
+        urgency_score = result['urgency_score']
+        
+        # Calculate percentage
+        percentage = int(urgency_score * 100)
+        
+        # Determine COLOR based on urgency score
+        if urgency_score >= 0.8:  # 80%+ = RED (High urgency)
+            color_class = "danger"
+            bg_class = "bg-danger"
+            text_class = "text-danger"
+            urgency_level = "HIGH"
+            icon = "🔴"
+        elif urgency_score >= 0.5:  # 50-79% = ORANGE/YELLOW (Medium)
+            color_class = "warning"
+            bg_class = "bg-warning"
+            text_class = "text-warning"
+            urgency_level = "MEDIUM"
+            icon = "🟡"
+        else:  # 0-49% = GREEN (Low urgency)
+            color_class = "success"
+            bg_class = "bg-success"
+            text_class = "text-success"
+            urgency_level = "LOW"
+            icon = "🟢"
+        
+        # Determine if urgent (for binary classification)
+        is_urgent = result['is_urgent']
+        
+        predictions.append({
+            'report': report,
+            'is_urgent': is_urgent,
+            'color_class': color_class,      # For Bootstrap classes
+            'bg_class': bg_class,            # Background class
+            'text_class': text_class,        # Text color class
+            'urgency_level': urgency_level,  # Text label
+            'icon': icon,                    # Emoji icon
+            'confidence': result['confidence'],
+            'urgency_score': urgency_score,
+            'percentage': percentage,
+            'confidence_level': result['confidence_level'],
+        })
+    
+    # Handle form submission
+    if request.method == 'POST':
+        user_report = request.POST.get('report_text', '').strip()
+        if user_report:
+            # Analyze user's report
+            user_result = classifier.predict(user_report)
+            user_urgency_score = user_result['urgency_score']
+            user_percentage = int(user_urgency_score * 100)
+            
+            # Determine color for user's report
+            if user_urgency_score >= 0.8:
+                user_color_class = "danger"
+                user_bg_class = "bg-danger"
+                user_text_class = "text-danger"
+                user_urgency_level = "HIGH"
+                user_icon = "🔴"
+            elif user_urgency_score >= 0.5:
+                user_color_class = "warning"
+                user_bg_class = "bg-warning"
+                user_text_class = "text-warning"
+                user_urgency_level = "MEDIUM"
+                user_icon = "🟡"
+            else:
+                user_color_class = "success"
+                user_bg_class = "bg-success"
+                user_text_class = "text-success"
+                user_urgency_level = "LOW"
+                user_icon = "🟢"
+            
+            user_prediction = {
+                'report': user_report,
+                'is_urgent': user_result['is_urgent'],
+                'color_class': user_color_class,
+                'bg_class': user_bg_class,
+                'text_class': user_text_class,
+                'urgency_level': user_urgency_level,
+                'icon': user_icon,
+                'confidence': user_result['confidence'],
+                'urgency_score': user_urgency_score,
+                'percentage': user_percentage,
+                'confidence_level': user_result['confidence_level'],
+                'is_user_report': True  # Flag to distinguish user's report
+            }
+            
+            # Add user's report to the top
+            predictions.insert(0, user_prediction)
+    
+    return render(request, 'incidents/test_ai.html', {
+        'predictions': predictions,
+        'title': 'AI Report Classifier'
+    })

@@ -133,3 +133,59 @@ class AIModelVersion(models.Model):
     
     def __str__(self):
         return f"{self.model_name} v{self.version}"
+
+from django.db import models
+from django.conf import settings
+from django.contrib.auth import get_user_model
+
+class IncidentReport(models.Model):
+    URGENCY_CHOICES = [
+        ('pending', 'Pending AI Review'),
+        ('urgent', 'Urgent'),
+        ('not_urgent', 'Not Urgent'),
+        ('manual_review', 'Needs Manual Review'),
+    ]
+    
+    # FIXED: Use settings.AUTH_USER_MODEL
+    citizen = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    location = models.CharField(max_length=300)
+    category = models.CharField(max_length=100)
+    urgency = models.CharField(max_length=20, choices=URGENCY_CHOICES, default='pending')
+    ai_confidence = models.FloatField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.title} - {self.urgency}"
+    
+    def analyze_urgency(self):
+        """Analyze report urgency using AI"""
+        try:
+            from ai_model.inference.classifier import ReportClassifier
+            
+            classifier = ReportClassifier()
+            result = classifier.predict(self.description)
+            
+            # Update fields based on AI prediction
+            if result['is_urgent']:
+                self.urgency = 'urgent'
+            else:
+                self.urgency = 'not_urgent'
+                
+            self.ai_confidence = result['confidence']
+            
+            # If confidence is low, flag for manual review
+            if result['confidence_level'] == 'medium':
+                self.urgency = 'manual_review'
+            
+            self.save()
+            return result
+        except Exception as e:
+            # Fallback if AI fails
+            print(f"AI analysis failed: {e}")
+            self.urgency = 'manual_review'
+            self.save()
+            return {'error': str(e)}

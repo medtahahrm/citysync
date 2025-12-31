@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Citizen Reports</h2>
+    
+    <!-- AI Demo Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>AI Classification Demo</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Sample Report:</strong> "{{ ai_demo.sample }}"</p>
+            <p>
+                <strong>AI Prediction:</strong>
+                {% if ai_demo.prediction.is_urgent %}
+                    <span class="badge bg-danger">URGENT</span>
+                {% else %}
+                    <span class="badge bg-success">Not Urgent</span>
+                {% endif %}
+            </p>
+            <p><strong>Confidence:</strong> {{ ai_demo.prediction.confidence|floatformat:2 }}</p>
+        </div>
+    </div>
+    
+    <!-- Reports List -->
+    {% for report in reports %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">{{ report.title }}</h5>
+            <p class="card-text">{{ report.description|truncatewords:50 }}</p>
+            
+            <!-- Urgency Badge -->
+            <span class="badge 
+                {% if report.urgency == 'urgent' %}bg-danger
+                {% elif report.urgency == 'not_urgent' %}bg-success
+                {% elif report.urgency == 'manual_review' %}bg-warning
+                {% else %}bg-secondary{% endif %}">
+                {{ report.get_urgency_display }}
+            </span>
+            
+            {% if report.ai_confidence %}
+                <span class="badge bg-info ms-2">
+                    AI Confidence: {{ report.ai_confidence|floatformat:2 }}
+                </span>
+            {% endif %}
+            
+            <a href="{% url 'report_detail' report.id %}" class="btn btn-sm btn-primary float-end">
+                View Details
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

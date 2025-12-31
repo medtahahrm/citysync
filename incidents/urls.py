@@ -5,6 +5,7 @@ from .views import incidents_map
 app_name = 'incidents'
 
 urlpatterns = [
+    path('test-ai/', views.test_ai_view, name='test_ai'),
     # Public views
     path('', views.incident_list, name='incident_list'),
     path('stats/', views.incident_stats, name='incident_stats'),

@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>🧠 AI Report Classifier</h2>
+    
+    <div class="row">
+        {% for pred in predictions %}
+        <div class="col-md-6 mb-4">
+            <!-- Card with dynamic border color -->
+            <div class="card border-{{ pred.color_class }} shadow-sm">
+                
+                <!-- Card Header with background color -->
+                <div class="card-header {{ pred.bg_class }} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ pred.icon }} {{ pred.urgency_level }} URGENCY</strong>
+                            {% if pred.is_urgent %}
+                            <span class="badge bg-dark ms-2">ACTION NEEDED</span>
+                            {% endif %}
+                        </div>
+                        <span>Confidence: {{ pred.confidence|floatformat:2 }}</span>
+                    </div>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="card-body">
+                    <p class="card-text">{{ pred.report }}</p>
+                    
+                    <!-- Urgency Score -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="{{ pred.text_class }}">
+                                <strong>Urgency Score</strong>
+                            </small>
+                            <small class="{{ pred.text_class }}">
+                                <strong>{{ pred.percentage }}%</strong>
+                                ({{ pred.urgency_score|floatformat:2 }})
+                            </small>
+                        </div>
+                        
+                        <!-- Progress Bar with dynamic color -->
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar {{ pred.bg_class }}" 
+                                 role="progressbar" 
+                                 style="width: {{ pred.percentage }}%"
+                                 aria-valuenow="{{ pred.percentage }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                {% if pred.percentage >= 80 %}
+                                ⚡ CRITICAL
+                                {% elif pred.percentage >= 50 %}
+                                ⚠️  MEDIUM
+                                {% else %}
+                                ✅ LOW
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Indicators -->
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    {% if pred.percentage >= 80 %}
+                                    <i class="fas fa-exclamation-triangle fa-lg text-danger"></i>
+                                    {% elif pred.percentage >= 50 %}
+                                    <i class="fas fa-exclamation-circle fa-lg text-warning"></i>
+                                    {% else %}
+                                    <i class="fas fa-check-circle fa-lg text-success"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <small class="text-muted">Status</small><br>
+                                    <strong class="{{ pred.text_class }}">
+                                        {% if pred.percentage >= 80 %}
+                                        CRITICAL
+                                        {% elif pred.percentage >= 50 %}
+                                        MEDIUM
+                                        {% else %}
+                                        LOW
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <i class="fas fa-chart-line fa-lg text-info"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Confidence</small><br>
+                                    <strong>
+                                        <span class="badge {% if pred.confidence_level == 'high' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ pred.confidence_level|upper }}
+                                        </span>
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Required Badge -->
+                    <div class="mt-3 text-center">
+                        {% if pred.percentage >= 80 %}
+                        <span class="badge bg-danger p-2">
+                            <i class="fas fa-bell"></i> IMMEDIATE RESPONSE REQUIRED
+                        </span>
+                        {% elif pred.percentage >= 50 %}
+                        <span class="badge bg-warning p-2">
+                            <i class="fas fa-clock"></i> RESPOND WITHIN 24 HOURS
+                        </span>
+                        {% else %}
+                        <span class="badge bg-success p-2">
+                            <i class="fas fa-calendar"></i> ROUTINE MAINTENANCE
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Test Form -->
+    <div class="card mt-5">
+        <div class="card-header bg-primary text-white">
+            <h5>Test Your Own Report</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <textarea class="form-control" name="report_text" rows="3" 
+                              placeholder="Type a report..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Analyze</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Legend -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h6>Color Legend</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-danger rounded-circle me-2" style="width: 20px; height: 20px;"></div>
+                        <div>
+                            <strong class="text-danger">RED (80-100%)</strong><br>
+                            <small>Critical emergencies</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-warning rounded-circle me-2" style="width: 20px; height: 20px;"></div>
+                        <div>
+                            <strong class="text-warning">ORANGE (50-79%)</strong><br>
+                            <small>Medium priority</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-success rounded-circle me-2" style="width: 20px; height: 20px;"></div>
+                        <div>
+                            <strong class="text-success">GREEN (0-49%)</strong><br>
+                            <small>Low priority</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+.card {
+    transition: transform 0.2s;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+.progress-bar {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+
+{% endblock %}
