@@ -21,6 +21,8 @@ class User(AbstractUser):
 
 class CitizenProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    points = models.IntegerField(default=0)   # ✅ NEW
+    badge = models.CharField(max_length=50, default="New Citizen")  # ✅ Optional
 
     cni_number = models.CharField(max_length=20, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)

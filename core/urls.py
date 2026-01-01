@@ -16,5 +16,5 @@ urlpatterns = [
     path("api/chat/", views.api_chat, name="api_chat"),
     path("api/chat/", api_chat, name="api_chat"),
     path("api/incidents/", api_incidents, name="api_incidents"),
-    
+    path("leaderboard/", views.leaderboard, name="leaderboard"),
 ]

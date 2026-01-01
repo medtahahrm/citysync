@@ -5,6 +5,25 @@
 
 {% block content %}
 
+<style>
+/* ✅ HERO BUTTONS LOOK BETTER */
+.hero-btn {
+    min-width: 240px;
+    transition: all 0.25s ease;
+    letter-spacing: .3px;
+}
+
+.hero-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 22px rgba(0,0,0,.18) !important;
+}
+
+.hero-btn-outline:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: #fff;
+}
+</style>
+
 <!-- HERO SECTION -->
 <section class="hero-section mb-5">
     <div class="card bg-primary text-white p-5 mb-4 shadow-sm rounded-4">
@@ -12,21 +31,41 @@
             <i class="fas fa-city me-2"></i> Bienvenue sur CitySync
         </h1>
 
-        <p class="hero-subtitle">
+        <p class="hero-subtitle text-center mt-3">
             Connecter citoyens et institutions pour des villes
             <strong>résilientes</strong> et <strong>intelligentes</strong>
         </p>
 
         {% if user.is_authenticated %}
-            <a href="{% url 'incidents:incident_list' %}" class="btn btn-light btn-lg mt-3">
-                <i class="fas fa-bullhorn me-2"></i>
-                Voir les signalements
-            </a>
+
+            <!-- ✅ Modern buttons -->
+            <div class="d-flex justify-content-center gap-4 flex-wrap mt-4">
+
+                <!-- Voir les signalements -->
+                <a href="{% url 'incidents:incident_list' %}"
+                   class="btn btn-light btn-lg px-5 py-3 fw-semibold rounded-pill shadow-sm hero-btn">
+                    <i class="fas fa-bullhorn me-2"></i>
+                    Voir les signalements
+                </a>
+
+                <!-- Tester IA -->
+                <a href="{% url 'incidents:test_ai' %}"
+                   class="btn btn-outline-light btn-lg px-5 py-3 fw-semibold rounded-pill shadow-sm hero-btn hero-btn-outline">
+                    <i class="fas fa-robot me-2"></i>
+                    Tester l'IA
+                </a>
+
+            </div>
+
         {% else %}
-            <a href="{% url 'login' %}" class="btn btn-light btn-lg mt-3">
-                <i class="fas fa-arrow-right me-2"></i>
-                Commencer maintenant
-            </a>
+
+            <div class="d-flex justify-content-center mt-4">
+                <a href="{% url 'login' %}" class="btn btn-light btn-lg px-5 py-3 fw-semibold rounded-pill shadow-sm hero-btn">
+                    <i class="fas fa-arrow-right me-2"></i>
+                    Commencer maintenant
+                </a>
+            </div>
+
         {% endif %}
     </div>
 </section>

@@ -5,7 +5,6 @@
 
 {% block extra_css %}
 <style>
-/* 👇 PASTE THE AVATAR CSS HERE */
 .avatar-wrapper {
     position: relative;
     width: 140px;
@@ -60,25 +59,15 @@
     display: none;
 }
 
-
 .profile-card {
     border-radius: 16px;
     box-shadow: 0 20px 40px rgba(0,0,0,.08);
 }
-.avatar {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-.badge-verify {
-    background: #ffc107;
-    color: #000;
-    font-size: .8rem;
-}
+
 .fade-in {
     animation: fade .6s ease;
 }
+
 @keyframes fade {
     from {opacity:0; transform: translateY(10px);}
     to {opacity:1;}
@@ -89,58 +78,65 @@
 {% block content %}
 <div class="row fade-in">
 
-<!-- LEFT CARD -->
-<div class="col-md-4">
-    <div class="card profile-card p-4 text-center position-relative">
+    <!-- LEFT CARD -->
+    <div class="col-md-4">
+        <div class="card profile-card p-4 text-center position-relative">
 
-        <!-- AVATAR -->
-        <div class="avatar-wrapper mx-auto mb-3">
-            {% if citizen.profile_picture %}
-                <img src="{{ citizen.profile_picture.url }}" class="avatar-img">
+            <!-- AVATAR -->
+            <div class="avatar-wrapper mx-auto mb-3">
+                {% if citizen and citizen.profile_picture %}
+                    <img src="{{ citizen.profile_picture.url }}" class="avatar-img" id="avatarPreview">
+                {% else %}
+                    <div class="avatar-fallback" id="avatarFallback">
+                        {{ request.user.username|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+
+                <!-- Upload button -->
+                <label class="avatar-upload">
+                    <i class="fas fa-camera"></i>
+                    <input type="file" name="profile_picture" form="profile-form" id="avatarInput">
+                </label>
+            </div>
+
+            <h4 class="mb-0">{{ request.user.username }}</h4>
+            <p class="text-muted mb-2">
+                {% if request.user.user_type == "citizen" %}
+                    Citoyen
+                {% elif request.user.user_type == "institution" %}
+                    Institution
+                {% else %}
+                    Administrateur
+                {% endif %}
+            </p>
+
+            {% if citizen and citizen.verified %}
+                <span class="badge bg-success px-3 py-2">✔ Compte vérifié</span>
             {% else %}
-                <div class="avatar-fallback">
-                    {{ request.user.username|slice:":1"|upper }}
-                </div>
+                <span class="badge bg-warning text-dark px-3 py-2">
+                    ⏳ En attente de vérification
+                </span>
             {% endif %}
 
-            <!-- Upload button -->
-            <label class="avatar-upload">
-                <i class="fas fa-camera"></i>
-                <input type="file" name="profile_picture" form="profile-form">
-            </label>
+            <hr>
+
+            <p class="mb-1">
+                <i class="fas fa-envelope text-primary"></i>
+                {{ request.user.email }}
+            </p>
+
+            <p class="mb-1">
+                <i class="fas fa-phone text-success"></i>
+                {{ request.user.phone_number|default:"—" }}
+            </p>
+
+            <p class="mb-0">
+                <i class="fas fa-map-marker-alt text-danger"></i>
+                {{ request.user.city|default:"—" }}
+            </p>
+
         </div>
-
-        <h4 class="mb-0">{{ request.user.username }}</h4>
-        <p class="text-muted mb-2">Citoyen</p>
-
-        {% if citizen.verified %}
-            <span class="badge bg-success px-3 py-2">✔ Compte vérifié</span>
-        {% else %}
-            <span class="badge bg-warning text-dark px-3 py-2">
-                ⏳ En attente de vérification
-            </span>
-        {% endif %}
-
-        <hr>
-
-        <p class="mb-1">
-            <i class="fas fa-envelope text-primary"></i>
-            {{ request.user.email }}
-        </p>
-
-        <p class="mb-1">
-            <i class="fas fa-phone text-success"></i>
-            {{ request.user.phone_number|default:"—" }}
-        </p>
-
-        <p class="mb-0">
-            <i class="fas fa-map-marker-alt text-danger"></i>
-            {{ request.user.city|default:"—" }}
-        </p>
-
     </div>
-</div>
-
 
     <!-- RIGHT FORM -->
     <div class="col-md-8">
@@ -148,38 +144,67 @@
 
             <h5 class="mb-4"><i class="fas fa-user-edit"></i> Modifier mon profil</h5>
 
-            <form method="post" enctype="multipart/form-data">
+            <form id="profile-form" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 <div class="row">
+
+                    <!-- USERNAME -->
+                    <div class="col-md-6 mb-3">
+                        <label>Nom d'utilisateur</label>
+                        {{ user_form.username }}
+                    </div>
+
+                    <!-- EMAIL -->
                     <div class="col-md-6 mb-3">
                         <label>Email</label>
                         {{ user_form.email }}
                     </div>
 
+                    <!-- PHONE -->
                     <div class="col-md-6 mb-3">
-                        <label>Profession</label>
-                        {{ citizen_form.profession }}
+                        <label>Téléphone</label>
+                        {{ user_form.phone_number }}
                     </div>
 
+                    <!-- CITY -->
                     <div class="col-md-6 mb-3">
-                        <label>Date de naissance</label>
-                        {{ citizen_form.date_of_birth }}
+                        <label>Ville</label>
+                        {{ user_form.city }}
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label>Contact d'urgence</label>
-                        {{ citizen_form.emergency_contact }}
-                    </div>
-
+                    <!-- ADDRESS -->
                     <div class="col-md-12 mb-3">
-                        <label>Photo de profil</label>
-                        {{ citizen_form.profile_picture }}
+                        <label>Adresse</label>
+                        {{ user_form.address }}
                     </div>
+
+                    {% if profile_form %}
+
+                        <!-- PROFESSION -->
+                        <div class="col-md-6 mb-3">
+                            <label>Profession</label>
+                            {{ profile_form.profession }}
+                        </div>
+
+                        <!-- BIRTH DATE -->
+                        <div class="col-md-6 mb-3">
+                            <label>Date de naissance</label>
+                            {{ profile_form.date_of_birth }}
+                        </div>
+
+                        <!-- EMERGENCY CONTACT -->
+                        <div class="col-md-6 mb-3">
+                            <label>Contact d'urgence</label>
+                            {{ profile_form.emergency_contact }}
+                        </div>
+
+                    {% endif %}
+
                 </div>
 
-                <div class="text-end">
-                    <button class="btn btn-primary px-4">
+                <div class="text-end mt-3">
+                    <button type="submit" class="btn btn-primary px-4">
                         <i class="fas fa-save"></i> Enregistrer
                     </button>
                 </div>
@@ -189,4 +214,21 @@
     </div>
 
 </div>
+
+<!-- ✅ Auto-submit avatar upload -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("avatarInput");
+    const form = document.getElementById("profile-form");
+
+    if (input) {
+        input.addEventListener("change", function () {
+            if (this.files.length > 0) {
+                form.submit();
+            }
+        });
+    }
+});
+</script>
+
 {% endblock %}

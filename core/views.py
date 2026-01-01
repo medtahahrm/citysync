@@ -7,18 +7,26 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 
+from django.db.models import F
+
 from .forms import (
     UserRegistrationForm,
     CitizenProfileForm,
     InstitutionProfileForm,
     ProfileForm,
     NotificationForm,
+    CitizenProfile,
 )
 
 from .models import User, CitizenProfile, InstitutionProfile, UserNotificationSettings
 from incidents.models import Incident
 from alerts.models import Alert
 from .chatbot import ollama_chat
+
+
+def leaderboard(request):
+    citizens = CitizenProfile.objects.select_related("user").order_by("-points")[:20]
+    return render(request, "core/leaderboard.html", {"citizens": citizens})
 
 
 def api_incidents(request):
@@ -160,8 +168,14 @@ def register_institution(request):
 def profile(request):
     user = request.user
 
-    citizen_profile = CitizenProfile.objects.filter(user=user).first()
-    institution_profile = InstitutionProfile.objects.filter(user=user).first()
+    # ✅ Ensure the correct profile exists
+    citizen_profile = None
+    institution_profile = None
+
+    if user.user_type == "citizen":
+        citizen_profile, _ = CitizenProfile.objects.get_or_create(user=user)
+    elif user.user_type == "institution":
+        institution_profile, _ = InstitutionProfile.objects.get_or_create(user=user)
 
     if request.method == "POST":
         user_form = ProfileForm(request.POST, instance=user)
@@ -169,16 +183,26 @@ def profile(request):
         if citizen_profile:
             profile_form = CitizenProfileForm(request.POST, request.FILES, instance=citizen_profile)
         elif institution_profile:
-            profile_form = InstitutionProfileForm(request.POST, instance=institution_profile)
+            profile_form = InstitutionProfileForm(request.POST, request.FILES, instance=institution_profile)
         else:
             profile_form = None
 
+        # ✅ Check validity
         if user_form.is_valid() and (profile_form is None or profile_form.is_valid()):
             user_form.save()
             if profile_form:
                 profile_form.save()
+
             messages.success(request, "✅ Profil mis à jour avec succès!")
             return redirect("profile")
+
+        else:
+            print("USER FORM ERRORS:", user_form.errors)
+            if profile_form:
+                print("PROFILE FORM ERRORS:", profile_form.errors)
+
+            messages.error(request, f"❌ Erreur: {user_form.errors} {profile_form.errors if profile_form else ''}")
+
 
     else:
         user_form = ProfileForm(instance=user)

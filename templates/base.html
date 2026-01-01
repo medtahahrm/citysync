@@ -364,7 +364,7 @@
                     <strong>résilientes</strong> et <strong>intelligentes</strong>.
                 </p>
                 <p class="text-secondary small">
-                    Hackathon Pentathlon 2025<br>
+                    <br>
                     Maroc
                 </p>
             </div>
@@ -537,6 +537,15 @@ async function sendMessage() {
             <b>Bot:</b> Bonjour 👋 Je suis là pour vous aider.
         </div>
     </div>
+    
+{% if user.is_authenticated and user.user_type == "citizen" %}
+  <span class="badge bg-warning text-dark">
+    ⭐ {{ user.citizenprofile.points }} pts
+  </span>
+  <span class="badge bg-info">
+    🎖️ {{ user.citizenprofile.badge }}
+  </span>
+{% endif %}
 
     <!-- Input -->
     <div style="padding:10px; display:flex; gap:10px; border-top:1px solid #ddd;">

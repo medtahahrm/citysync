@@ -60,12 +60,16 @@ class CitizenProfileForm(forms.ModelForm):
         )
         widgets = {
             "date_of_birth": forms.DateInput(
-                attrs={"type": "date", "class": "form-control"}
+                attrs={"type": "date", "class": "form-control"},
+                format="%Y-%m-%d",
             ),
             "profession": forms.TextInput(attrs={"class": "form-control"}),
             "emergency_contact": forms.TextInput(attrs={"class": "form-control"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["date_of_birth"].input_formats = ["%Y-%m-%d"]
 
 # =========================
 # INSTITUTION PROFILE FORM
@@ -93,9 +97,13 @@ class InstitutionProfileForm(forms.ModelForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ("email",)
+        fields = ("username", "email", "phone_number", "city", "address")
         widgets = {
-            "email": forms.EmailInput(attrs={"class": "form-control"})
+            "username": forms.TextInput(attrs={"class": "form-control"}),
+            "email": forms.EmailInput(attrs={"class": "form-control"}),
+            "phone_number": forms.TextInput(attrs={"class": "form-control"}),
+            "city": forms.TextInput(attrs={"class": "form-control"}),
+            "address": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
 
 
